@@ -1,71 +1,76 @@
 package com.expensetracker.model;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * Core domain object representing a single expense entry.
- * Kept as a plain class (no Lombok) so the project has zero
- * annotation-processing surprises when built on a fresh machine.
+ * Core domain object representing a single financial transaction.
+ *
+ * A transaction can be either INCOME (money coming in, e.g. salary)
+ * or EXPENSE (money going out, e.g. buying groceries).
+ *
+ * This is a plain Java class (POJO) - no framework magic here.
+ * It just holds data. Getters and setters let other classes read/write it.
  */
 public class Expense {
 
-    private String id;
-    private String title;
-    private double amount;
-    private String category;
-    private LocalDate date;
+    private String id;           // Unique identifier (UUID)
+    private String title;        // Short name, e.g. "Monthly Salary"
+    private double amount;       // Money amount, e.g. 5000.00
+    private String type;         // "INCOME" or "EXPENSE"
+    private String category;     // e.g. "Food", "Salary", "Travel"
+    private LocalDate date;      // When this transaction happened
+    private String notes;        // Optional extra detail
+    private LocalDateTime createdAt; // When this record was saved to DB
 
+    // ── Constructors ──────────────────────────────────────────────────────────
+
+    /** No-arg constructor needed by Spring / JSON libraries */
     public Expense() {
     }
 
-    public Expense(String id, String title, double amount, String category, LocalDate date) {
-        this.id = id;
-        this.title = title;
-        this.amount = amount;
-        this.category = category;
-        this.date = date;
+    /** Full constructor used when reading rows back from the database */
+    public Expense(String id, String title, double amount, String type,
+                   String category, LocalDate date, String notes, LocalDateTime createdAt) {
+        this.id        = id;
+        this.title     = title;
+        this.amount    = amount;
+        this.type      = type;
+        this.category  = category;
+        this.date      = date;
+        this.notes     = notes;
+        this.createdAt = createdAt;
     }
 
-    public String getId() {
-        return id;
-    }
+    // ── Getters & Setters ─────────────────────────────────────────────────────
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-    public String getTitle() {
-        return title;
-    }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+    public double getAmount() { return amount; }
+    public void setAmount(double amount) { this.amount = amount; }
 
-    public double getAmount() {
-        return amount;
-    }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
 
-    public void setAmount(double amount) {
-        this.amount = amount;
-    }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 
-    public String getCategory() {
-        return category;
-    }
+    public LocalDate getDate() { return date; }
+    public void setDate(LocalDate date) { this.date = date; }
 
-    public void setCategory(String category) {
-        this.category = category;
-    }
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
 
-    public LocalDate getDate() {
-        return date;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public void setDate(LocalDate date) {
-        this.date = date;
-    }
+    // ── equals / hashCode ─────────────────────────────────────────────────────
+    // Two expenses are the same if they have the same ID (like a unique ID card)
 
     @Override
     public boolean equals(Object o) {
@@ -86,8 +91,10 @@ public class Expense {
                 "id='" + id + '\'' +
                 ", title='" + title + '\'' +
                 ", amount=" + amount +
+                ", type='" + type + '\'' +
                 ", category='" + category + '\'' +
                 ", date=" + date +
+                ", notes='" + notes + '\'' +
                 '}';
     }
 }

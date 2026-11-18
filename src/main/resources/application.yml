@@ -5,8 +5,20 @@ spring:
   application:
     name: expense-tracker
 
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
-  api-docs:
-    path: /v3/api-docs
+  # ─── MySQL DataSource ───────────────────────────────────────────────────────
+  # Update the url, username, and password to match YOUR local MySQL setup.
+  # Make sure you have created the database first:
+  #   CREATE DATABASE expense_tracker_db;
+  datasource:
+    url: jdbc:mysql://localhost:3306/expense_tracker_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: Vishva@2005          # <-- change to your MySQL root password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # ─── SQL Schema Initialization ──────────────────────────────────────────────
+  # Spring Boot will automatically run schema.sql on startup to create the table
+  sql:
+    init:
+      mode: always          # always run schema.sql (use 'never' in production)
+      schema-locations: classpath:schema.sql
+

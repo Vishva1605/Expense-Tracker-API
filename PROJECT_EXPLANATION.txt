@@ -1,0 +1,927 @@
+╔══════════════════════════════════════════════════════════════════════════════════════╗
+║           PERSONAL EXPENSE TRACKER — COMPLETE PROJECT EXPLANATION                    ║                           ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+
+Written on: 2026-10-08
+Project:    Personal Expense Tracker REST API
+Tech Stack: Java 17, Spring Boot 3.2, JDBC, MySQL, Maven
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 1: WHAT IS THIS PROJECT? (The Big Picture)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Imagine you have a notebook where you write down every time you spend or receive money.
+  → You write: "Bought lunch - ₹150" or "Got pocket money - ₹500"
+
+This project is exactly that notebook — but a DIGITAL version that:
+  - Stores your income and expense records in a MySQL DATABASE (like an Excel sheet on a computer)
+  - Lets you ADD, VIEW, UPDATE, DELETE, and SEARCH records using the INTERNET (HTTP requests)
+  - Is built using JAVA and SPRING BOOT (a popular professional framework used in companies)
+
+Instead of opening an app with buttons, other programs communicate with our app using
+something called REST API. Think of REST API like a restaurant:
+  - You (the client) place an ORDER (HTTP request)
+  - The waiter (Spring Boot) takes your order to the kitchen
+  - The kitchen (MySQL database) prepares the food (data)
+  - The waiter brings back the FOOD (JSON response)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 2: KEY TECHNOLOGIES USED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. JAVA
+   ─────
+   Java is the programming language used to write all the logic.
+   Think of it like the language you use to write instructions (like English, but for computers).
+
+   Key OOP concepts used:
+   ┌─────────────────┬────────────────────────────────────────────────────────────────┐
+   │ Concept         │ Simple Explanation                                             │
+   ├─────────────────┼────────────────────────────────────────────────────────────────┤
+   │ Class           │ A blueprint. Like a blueprint for building a house.            │
+   │                 │ e.g. class Expense { ... } is a blueprint for one transaction  │
+   │ Object          │ A real thing made from the blueprint.                          │
+   │                 │ e.g. new Expense() creates one actual transaction record        │
+   │ Encapsulation   │ Hiding data inside a class, accessed via getters/setters.      │
+   │                 │ Like keeping your diary locked, accessible via a key           │
+   │ Inheritance     │ RuntimeException is a parent class; our custom exceptions      │
+   │                 │ inherit (extend) from it to reuse its behavior                 │
+   │ Exception       │ An error that happens at runtime. We throw custom exceptions   │
+   │ Handling        │ (e.g. ExpenseNotFoundException) and catch them cleanly         │
+   └─────────────────┴────────────────────────────────────────────────────────────────┘
+
+2. SPRING BOOT
+   ─────────────
+   Spring Boot is a FRAMEWORK — a ready-made toolbox built on top of Java.
+   Without Spring Boot, you'd have to write 1000 lines to start a web server.
+   With Spring Boot, you just run one class and it sets everything up for you!
+
+   What Spring Boot does for us:
+     ✓ Starts an embedded Tomcat web server (no need to install Apache/Tomcat separately)
+     ✓ Reads our application.yml and connects to MySQL automatically
+     ✓ Runs schema.sql to create our database table
+     ✓ Maps HTTP URLs to Java methods (e.g. GET /api/expenses → calls getExpenses())
+     ✓ Converts Java objects to JSON (for sending as API responses) automatically
+
+3. REST API (HTTP Methods)
+   ────────────────────────
+   REST API uses standard HTTP methods — the same ones your browser uses:
+
+   ┌────────────┬──────────────┬────────────────────────────────────────────────────┐
+   │ HTTP       │ What it does │ Our Usage                                          │
+   │ Method     │              │                                                    │
+   ├────────────┼──────────────┼────────────────────────────────────────────────────┤
+   │ POST       │ Create new   │ Add a new income/expense record                    │
+   │ GET        │ Read/Fetch   │ View all records, or one specific record           │
+   │ PUT        │ Update all   │ Replace/Update an existing record completely       │
+   │ DELETE     │ Remove       │ Delete a record permanently                        │
+   └────────────┴──────────────┴────────────────────────────────────────────────────┘
+
+   JSON (JavaScript Object Notation):
+   JSON is the language for data exchange. It's like a structured message:
+   {
+     "title": "Monthly Salary",
+     "amount": 15000.00,
+     "type": "INCOME",
+     "category": "Salary",
+     "date": "2024-06-01"
+   }
+
+4. JDBC (Java Database Connectivity)
+   ────────────────────────────────────
+   JDBC is a set of rules (interface) that allows Java to talk to a database.
+   Think of JDBC as a phone line between Java and MySQL.
+
+   Without JDBC: Java has no idea how to talk to MySQL.
+   With JDBC:    Java can send SQL commands to MySQL and get results back.
+
+   We use Spring's JdbcTemplate which is a helper that:
+     - Borrows a connection from the connection pool
+     - Executes your SQL query
+     - Returns the result as Java objects
+     - Returns the connection back to the pool (even if an error occurs)
+
+5. MySQL (Database)
+   ─────────────────
+   MySQL is a Relational Database — like a super-organized Excel file.
+   Data is stored in TABLES (like spreadsheets with rows and columns).
+
+   Our table is called "transactions":
+   ┌────────────────────────────────────────────────────────────────────────────────┐
+   │  id          │ title          │ amount  │ type    │ category │ txn_date        │
+   ├──────────────┼────────────────┼─────────┼─────────┼──────────┼─────────────────│
+   │ abc-123-...  │ Monthly Salary │ 15000   │ INCOME  │ Salary   │ 2024-06-01      │
+   │ def-456-...  │ Grocery Shop   │ 850     │ EXPENSE │ Food     │ 2024-06-05      │
+   │ ghi-789-...  │ Bus Pass       │ 200     │ EXPENSE │ Travel   │ 2024-06-10      │
+   └────────────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 3: PROJECT FOLDER STRUCTURE (What Each File Does)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+src/
+├── main/
+│   ├── java/com/expensetracker/
+│   │   │
+│   │   ├── ExpenseTrackerApplication.java     ← STARTING POINT of the entire app
+│   │   │                                         (like the "ON" button)
+│   │   │
+│   │   ├── model/
+│   │   │   └── Expense.java                   ← Blueprint for one transaction
+│   │   │                                         (holds id, title, amount, type, etc.)
+│   │   │
+│   │   ├── dto/                               ← Data Transfer Objects
+│   │   │   ├── ExpenseRequest.java            ← What the CLIENT sends to us
+│   │   │   ├── ApiError.java                  ← What we send back on ERROR
+│   │   │   ├── TotalResponse.java             ← What we send for total queries
+│   │   │   └── SummaryResponse.java           ← What we send for summary dashboard
+│   │   │
+│   │   ├── controller/
+│   │   │   └── ExpenseController.java         ← FRONT DOOR: receives HTTP requests
+│   │   │                                         and sends back responses
+│   │   │
+│   │   ├── service/
+│   │   │   └── ExpenseService.java            ← BRAIN: contains all business logic
+│   │   │                                         (rules, calculations, validation)
+│   │   │
+│   │   ├── repository/
+│   │   │   └── ExpenseRepository.java         ← DATABASE LAYER: runs SQL queries
+│   │   │                                         using JdbcTemplate
+│   │   │
+│   │   └── exception/
+│   │       ├── ExpenseNotFoundException.java  ← Custom error when ID not found
+│   │       └── GlobalExceptionHandler.java    ← Catches all errors, returns clean JSON
+│   │
+│   └── resources/
+│       ├── application.yml                    ← Configuration: port, MySQL URL, etc.
+│       └── schema.sql                         ← SQL to create the transactions table
+│
+└── pom.xml                                    ← Maven build file: lists all dependencies
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 4: THE LAYERED ARCHITECTURE (How Layers Talk to Each Other)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Think of the app in 3 layers, like floors in a building:
+
+  ┌───────────────────────────────────────────────────────────┐
+  │  CLIENT (Postman / Frontend App)                          │
+  │  → Sends HTTP requests (POST, GET, PUT, DELETE)           │
+  └───────────────────────┬───────────────────────────────────┘
+                          │ HTTP Request (JSON)
+                          ▼
+  ┌───────────────────────────────────────────────────────────┐
+  │  FLOOR 1: CONTROLLER LAYER (ExpenseController.java)       │
+  │  → Receives the HTTP request                              │
+  │  → Reads URL, method, body                                │
+  │  → Calls the right Service method                         │
+  │  → Returns HTTP Response with JSON                        │
+  └───────────────────────┬───────────────────────────────────┘
+                          │ Java method call
+                          ▼
+  ┌───────────────────────────────────────────────────────────┐
+  │  FLOOR 2: SERVICE LAYER (ExpenseService.java)             │
+  │  → Contains all BUSINESS LOGIC                            │
+  │  → Creates Expense objects                                │
+  │  → Validates rules (e.g. startDate must be before endDate)│
+  │  → Calls Repository for database operations               │
+  └───────────────────────┬───────────────────────────────────┘
+                          │ Java method call
+                          ▼
+  ┌───────────────────────────────────────────────────────────┐
+  │  FLOOR 3: REPOSITORY LAYER (ExpenseRepository.java)       │
+  │  → Runs SQL queries using JdbcTemplate                    │
+  │  → INSERT, SELECT, UPDATE, DELETE from MySQL              │
+  │  → Returns Java objects back to Service                   │
+  └───────────────────────┬───────────────────────────────────┘
+                          │ SQL Queries (via JDBC)
+                          ▼
+  ┌───────────────────────────────────────────────────────────┐
+  │  MySQL DATABASE (transactions table)                      │
+  │  → Stores all data permanently on disk                    │
+  └───────────────────────────────────────────────────────────┘
+
+Why separate into layers?
+  Each layer has ONE job. If we want to change the database from MySQL to PostgreSQL,
+  we only change the Repository layer — Controller and Service stay the same!
+  This is called "Separation of Concerns" — a core software engineering principle.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 5: EVERY FILE EXPLAINED IN DETAIL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+═══════════════════════════════════════════════════════════
+FILE 1: pom.xml  (Maven Build File)
+═══════════════════════════════════════════════════════════
+
+POM = Project Object Model
+
+Maven is a "dependency manager" — like an app store for Java libraries.
+Instead of downloading JAR files manually, you just list what you need in pom.xml
+and Maven downloads them automatically.
+
+Key dependencies in our pom.xml:
+
+  spring-boot-starter-web
+  → Gives us everything needed to build a web server and REST APIs.
+  → Includes an embedded Tomcat server (no separate install needed).
+
+  spring-boot-starter-validation
+  → Gives us @NotBlank, @Positive, @Pattern, etc.
+  → Used to automatically validate incoming JSON data.
+
+  spring-boot-starter-jdbc
+  → Gives us JdbcTemplate — the main class for running SQL from Java.
+
+  mysql-connector-j
+  → The JDBC driver: the actual code that connects Java to MySQL.
+  → MySQL communicates using its own protocol; this driver speaks that language.
+
+  spring-boot-starter-actuator
+  → Gives free endpoints like /actuator/health to check if app is running.
+
+  springdoc-openapi-starter-webmvc-ui
+  → Auto-generates interactive Swagger documentation at /swagger-ui.html
+
+
+═══════════════════════════════════════════════════════════
+FILE 2: application.yml  (Configuration File)
+═══════════════════════════════════════════════════════════
+
+This is the "settings file" of the application. Written in YAML format
+(indentation-based, easier to read than XML or properties files).
+
+  server.port: 8080
+  → The app runs at http://localhost:8080
+
+  spring.datasource.url:
+  → The JDBC URL tells Java WHERE to find MySQL and which database to use.
+  → Format: jdbc:mysql://HOST:PORT/DATABASE_NAME?options
+
+  spring.datasource.username / password:
+  → MySQL login credentials. Change these to match your local MySQL setup.
+
+  spring.sql.init.mode: always
+  → Spring Boot will automatically run schema.sql every time the app starts.
+  → This ensures our table exists before we try to use it.
+
+  springdoc.swagger-ui.path: /swagger-ui.html
+  → You can visit this URL in your browser to see and test all APIs visually.
+
+
+═══════════════════════════════════════════════════════════
+FILE 3: schema.sql  (Database Setup)
+═══════════════════════════════════════════════════════════
+
+SQL (Structured Query Language) is the language for databases.
+This file contains the command to create our table.
+
+  CREATE TABLE IF NOT EXISTS transactions (
+      id          VARCHAR(36)     — stores UUIDs (e.g. "abc-123-def")
+      title       VARCHAR(255)    — description of the transaction
+      amount      DECIMAL(15, 2)  — money value with 2 decimal places
+      type        VARCHAR(10)     — "INCOME" or "EXPENSE"
+      category    VARCHAR(100)    — "Food", "Salary", "Travel", etc.
+      txn_date    DATE            — the date of the transaction
+      notes       VARCHAR(500)    — optional extra details
+      created_at  TIMESTAMP       — automatically set to current time
+  );
+
+  "IF NOT EXISTS" is important — it prevents an error if the table already
+  exists from a previous run. It says: "Only create if it's not there yet."
+
+
+═══════════════════════════════════════════════════════════
+FILE 4: Expense.java  (The Model/Domain Class)
+═══════════════════════════════════════════════════════════
+
+This is a Java class that represents ONE transaction record.
+It's the same shape as one row in the MySQL transactions table.
+
+  private String id;        → Unique ID (UUID, e.g. "a1b2c3d4-...")
+  private String title;     → e.g. "Monthly Salary"
+  private double amount;    → e.g. 15000.00
+  private String type;      → "INCOME" or "EXPENSE"
+  private String category;  → e.g. "Salary", "Food"
+  private LocalDate date;   → e.g. 2024-06-01
+  private String notes;     → Optional extra info
+  private LocalDateTime createdAt; → When it was saved to DB
+
+Getters and Setters:
+  Every field has a getter (to READ the value) and setter (to WRITE the value).
+  This is called ENCAPSULATION — one of the 4 pillars of OOP.
+
+  Example:
+    expense.setTitle("Lunch");    // writes value
+    String t = expense.getTitle(); // reads value
+
+equals() and hashCode():
+  Two Expense objects are considered "equal" if they have the same id.
+  This is used when you check things like "is this expense in the list?"
+
+
+═══════════════════════════════════════════════════════════
+FILE 5: ExpenseRequest.java  (DTO - Data Transfer Object)
+═══════════════════════════════════════════════════════════
+
+A DTO is a simple class used to carry data from one place to another.
+Think of it as a FORM that the client fills out when submitting data.
+
+Why a separate DTO instead of using Expense directly?
+  - Expense has 'id' and 'createdAt' (server-generated, client shouldn't set them)
+  - The DTO only has fields the CLIENT is allowed to provide
+  - Keeps security clean: clients can't force-set their own IDs
+
+Validation annotations:
+  @NotBlank   → field cannot be empty or just spaces
+  @NotNull    → field cannot be missing/null
+  @Positive   → number must be greater than 0
+  @Pattern    → must match a regular expression pattern
+
+  Example:
+    @Pattern(regexp = "INCOME|EXPENSE")
+    → The 'type' field must be exactly "INCOME" or "EXPENSE".
+    → If someone sends "expense" (lowercase), it's rejected with a 400 error.
+
+  These are checked automatically by Spring when @Valid is used in the controller.
+
+
+═══════════════════════════════════════════════════════════
+FILE 6: ExpenseRepository.java  (Database Layer with JDBC)
+═══════════════════════════════════════════════════════════
+
+This is the most important file for understanding JDBC.
+It talks directly to MySQL using JdbcTemplate.
+
+@Repository
+→ Tells Spring: "This class handles database operations."
+→ Spring creates one instance and makes it available everywhere needed.
+
+JdbcTemplate jdbcTemplate
+→ This is Spring's helper for database access.
+→ Spring automatically provides this based on our datasource configuration.
+
+RowMapper<Expense> expenseRowMapper
+→ A RowMapper knows how to read ONE database row and convert it to ONE Expense object.
+→ rs.getString("title") reads the "title" column from the current row.
+→ rs.getDate("txn_date").toLocalDate() reads the date and converts it.
+
+SQL Operations (CRUD):
+
+  CREATE (INSERT):
+    String sql = "INSERT INTO transactions (id, title, amount, ...) VALUES (?, ?, ?, ...)";
+    jdbcTemplate.update(sql, expense.getId(), expense.getTitle(), ...);
+
+    The '?' are placeholders (called "prepared statement parameters").
+    JDBC replaces them with the actual values safely.
+    This PREVENTS SQL INJECTION ATTACKS (a hacking technique where someone
+    types "'; DROP TABLE transactions;--" to destroy your database).
+
+  READ (SELECT):
+    String sql = "SELECT * FROM transactions";
+    List<Expense> list = jdbcTemplate.query(sql, expenseRowMapper);
+
+    jdbcTemplate.query() runs the SQL and uses the RowMapper to convert
+    every row into an Expense object and collects them in a List.
+
+  UPDATE:
+    String sql = "UPDATE transactions SET title=?, amount=?, ... WHERE id=?";
+    jdbcTemplate.update(sql, expense.getTitle(), expense.getAmount(), ..., expense.getId());
+
+    Always put the WHERE clause to update only the specific row.
+    Without WHERE, you'd update ALL rows — a catastrophic mistake!
+
+  DELETE:
+    String sql = "DELETE FROM transactions WHERE id = ?";
+    jdbcTemplate.update(sql, id);
+
+  EXISTS CHECK:
+    String sql = "SELECT COUNT(*) FROM transactions WHERE id = ?";
+    Integer count = jdbcTemplate.queryForObject(sql, Integer.class, id);
+    return count != null && count > 0;
+
+    queryForObject() is used when you expect exactly ONE value back (not a list).
+
+  KEYWORD SEARCH (LIKE):
+    String sql = "SELECT * FROM transactions WHERE LOWER(title) LIKE ?";
+    String pattern = "%" + keyword.toLowerCase() + "%";
+
+    The '%' means "any characters here".
+    So "%lunch%" matches "Buy Lunch", "Office Lunch", "Quick lunch break".
+    LOWER() makes it case-insensitive.
+
+  DATE RANGE (BETWEEN):
+    String sql = "SELECT * FROM transactions WHERE txn_date BETWEEN ? AND ?";
+    jdbcTemplate.query(sql, expenseRowMapper, startDate, endDate);
+
+    BETWEEN is inclusive (includes both start and end date).
+
+  SUM (Aggregate):
+    String sql = "SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = ?";
+    Double result = jdbcTemplate.queryForObject(sql, Double.class, type);
+
+    COALESCE(SUM(amount), 0) means: if SUM returns null (no rows found), use 0 instead.
+    queryForObject() returns a single value — the total.
+
+
+═══════════════════════════════════════════════════════════
+FILE 7: ExpenseService.java  (Business Logic Layer)
+═══════════════════════════════════════════════════════════
+
+The Service layer is the "brain" that decides HOW things work.
+It uses the Repository to talk to the database.
+
+@Service
+→ Marks this class as a business logic component.
+
+Key methods:
+
+  addExpense(ExpenseRequest request):
+    1. Create a new Expense object
+    2. Generate a unique ID using UUID.randomUUID().toString()
+       UUID = Universally Unique Identifier. Example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+       It's virtually impossible for two UUIDs to be the same!
+    3. Copy values from request to the expense
+    4. Call repository.save(expense) to insert into MySQL
+
+  getExpenses(category, type):
+    Uses Optional<String> — a container that either holds a value or is empty.
+    Optional.of("Food")  → has value "Food"
+    Optional.empty()     → no value (filter not applied)
+    This cleanly handles "the parameter was not provided" without null checks.
+
+  updateExpense(id, request):
+    First checks if the expense exists (throws ExpenseNotFoundException if not).
+    Then updates all fields and calls repository.update().
+    This follows a "find before update" pattern to give a proper 404 error
+    instead of silently updating nothing.
+
+  getByDateRange(startDate, endDate):
+    Business rule: startDate must be before or same as endDate.
+    If not, throws IllegalArgumentException which becomes a 400 response.
+
+  getSummary():
+    Uses SQL SUM queries (via repository.sumByType()) to calculate totals.
+    More efficient than loading all rows into memory and summing in Java.
+
+
+═══════════════════════════════════════════════════════════
+FILE 8: ExpenseController.java  (REST API Layer)
+═══════════════════════════════════════════════════════════
+
+The Controller is the "front door" — it handles HTTP requests.
+
+@RestController
+→ This class handles web requests.
+→ All methods automatically return JSON (no need to manually convert).
+
+@RequestMapping("/api/expenses")
+→ All URLs in this controller start with /api/expenses
+
+Endpoint mapping:
+
+  @PostMapping → handles POST /api/expenses
+  @GetMapping  → handles GET  /api/expenses
+  @PutMapping("/{id}")    → handles PUT    /api/expenses/{id}
+  @DeleteMapping("/{id}") → handles DELETE /api/expenses/{id}
+  @GetMapping("/search")  → handles GET    /api/expenses/search
+  @GetMapping("/range")   → handles GET    /api/expenses/range
+  @GetMapping("/total")   → handles GET    /api/expenses/total
+  @GetMapping("/summary") → handles GET    /api/expenses/summary
+
+Key annotations on method parameters:
+
+  @RequestBody  → reads the entire JSON body of the request
+  @PathVariable → reads part of the URL path (e.g. /{id})
+  @RequestParam → reads a query parameter from the URL (e.g. ?category=Food)
+  @Valid        → triggers automatic validation of the @RequestBody
+
+ResponseEntity<T>:
+  This is the return type for all controller methods.
+  It lets us control the HTTP status code AND the body:
+    ResponseEntity.ok(data)              → 200 OK with data
+    ResponseEntity.status(201).body(data) → 201 CREATED with data
+    ResponseEntity.noContent().build()   → 204 NO CONTENT (for DELETE)
+
+
+═══════════════════════════════════════════════════════════
+FILE 9: ExpenseNotFoundException.java  (Custom Exception)
+═══════════════════════════════════════════════════════════
+
+This is a custom exception class. We CREATE our own exception type
+so we can handle it differently from generic exceptions.
+
+  public class ExpenseNotFoundException extends RuntimeException {
+      public ExpenseNotFoundException(String id) {
+          super("Transaction not found with id: " + id);
+      }
+  }
+
+extends RuntimeException:
+→ RuntimeException is a built-in Java class for errors that happen at runtime.
+→ Our custom exception INHERITS all of RuntimeException's behavior
+  (this is INHERITANCE — one of OOP's 4 pillars).
+→ It doesn't need to be declared with "throws" in method signatures.
+
+When is it thrown?
+→ repository.findById(id) returns Optional.empty() (id not in database).
+→ Service calls .orElseThrow(() -> new ExpenseNotFoundException(id))
+→ GlobalExceptionHandler catches it and returns HTTP 404.
+
+
+═══════════════════════════════════════════════════════════
+FILE 10: GlobalExceptionHandler.java  (Error Handler)
+═══════════════════════════════════════════════════════════
+
+Without this, Spring would return ugly HTML error pages.
+This class intercepts ALL exceptions from ALL controllers and
+returns clean, structured JSON error responses.
+
+@RestControllerAdvice
+→ "I will handle errors from all controllers."
+→ Applies globally across the entire application.
+
+@ExceptionHandler(SomeException.class)
+→ "When this specific exception type is thrown, call THIS method."
+
+Exception handlers we have:
+  ExpenseNotFoundException       → 404 Not Found
+  MethodArgumentNotValidException → 400 Validation Failed (with all field errors)
+  IllegalArgumentException       → 400 Bad Request (business rule violations)
+  MethodArgumentTypeMismatchException → 400 Invalid Parameter (wrong type in URL)
+  MissingServletRequestParameterException → 400 Missing Parameter
+  DataAccessException            → 500 Database Error (hides raw SQL from client)
+  Exception (catch-all)          → 500 Internal Server Error
+
+Why hide database errors from the client?
+→ Security! If we return "Table 'transactions' doesn't exist: column 'xyz'",
+  hackers learn about your database structure and can exploit it.
+→ We return a generic "Database error occurred" message instead.
+
+
+═══════════════════════════════════════════════════════════
+FILE 11: ApiError.java  (Error Response Shape)
+═══════════════════════════════════════════════════════════
+
+This is the SHAPE of every error response. Every error looks like this JSON:
+  {
+    "timestamp": "2024-06-15T10:30:00Z",
+    "status": 404,
+    "error": "Not Found",
+    "messages": ["Transaction not found with id: abc-123"]
+  }
+
+Having a CONSISTENT error format is important for clients (frontend apps, mobile apps).
+They can reliably check response.status and display response.messages to the user.
+
+
+═══════════════════════════════════════════════════════════
+FILE 12: SummaryResponse.java  (Dashboard Summary DTO)
+═══════════════════════════════════════════════════════════
+
+The GET /api/expenses/summary endpoint returns:
+  {
+    "totalIncome": 15000.00,
+    "totalExpense": 8500.00,
+    "netBalance": 6500.00
+  }
+
+netBalance = totalIncome - totalExpense
+→ Positive net balance means you saved money (you earned more than you spent).
+→ Negative net balance means you overspent (you spent more than you earned).
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 6: COMPLETE LIST OF REST API ENDPOINTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Base URL: http://localhost:8080/api/expenses
+
+┌───────┬──────────────────────────────────┬──────────────────────────────────────────┐
+│ HTTP  │ URL                              │ What it does                             │
+│ Verb  │                                  │                                          │
+├───────┼──────────────────────────────────┼──────────────────────────────────────────┤
+│ POST  │ /api/expenses                    │ Add a new income/expense record          │
+│ GET   │ /api/expenses                    │ Get all records                          │
+│ GET   │ /api/expenses?category=Food      │ Get records filtered by category         │
+│ GET   │ /api/expenses?type=EXPENSE       │ Get records filtered by type             │
+│ GET   │ /api/expenses/{id}               │ Get one specific record by ID            │
+│ PUT   │ /api/expenses/{id}               │ Update a record completely               │
+│ DELETE│ /api/expenses/{id}               │ Delete a record                          │
+│ GET   │ /api/expenses/search?keyword=xyz │ Search records by title keyword          │
+│ GET   │ /api/expenses/range?startDate=   │ Get records between two dates            │
+│       │   &endDate=                      │                                          │
+│ GET   │ /api/expenses/total              │ Get total amount across all records      │
+│ GET   │ /api/expenses/total?category=    │ Get total for one specific category      │
+│ GET   │ /api/expenses/summary            │ Get income/expense/balance dashboard     │
+└───────┴──────────────────────────────────┴──────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 7: EXAMPLE REQUEST AND RESPONSE (Step-by-Step Walkthrough)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+EXAMPLE: Adding a new expense record using Postman
+
+Step 1: Client sends HTTP POST request to http://localhost:8080/api/expenses
+        with this JSON body:
+        {
+          "title": "Grocery Shopping",
+          "amount": 850.00,
+          "type": "EXPENSE",
+          "category": "Food",
+          "date": "2024-06-15",
+          "notes": "Weekly grocery run"
+        }
+
+Step 2: Spring Boot receives the request.
+        @PostMapping in ExpenseController picks it up.
+        @Valid checks all the validation rules.
+        → title is not blank ✓
+        → amount is positive ✓
+        → type is "INCOME" or "EXPENSE" ✓
+        → category is not blank ✓
+        → date is present ✓
+
+Step 3: Controller calls expenseService.addExpense(request)
+
+Step 4: ExpenseService.addExpense():
+        → Creates new Expense object
+        → Sets id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890" (auto UUID)
+        → Copies all other fields from request
+        → Calls repository.save(expense)
+
+Step 5: ExpenseRepository.save():
+        → Runs this SQL using JdbcTemplate:
+          INSERT INTO transactions (id, title, amount, type, category, txn_date, notes)
+          VALUES ('a1b2...', 'Grocery Shopping', 850.00, 'EXPENSE', 'Food', '2024-06-15', 'Weekly grocery run')
+        → MySQL stores this row in the transactions table
+
+Step 6: Service returns the Expense object to Controller.
+        Controller wraps it in ResponseEntity.status(201).body(expense)
+
+Step 7: Spring Boot converts the Expense object to JSON and sends it back:
+        HTTP Status: 201 CREATED
+        Response Body:
+        {
+          "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+          "title": "Grocery Shopping",
+          "amount": 850.0,
+          "type": "EXPENSE",
+          "category": "Food",
+          "date": "2024-06-15",
+          "notes": "Weekly grocery run",
+          "createdAt": "2024-06-15T10:30:00"
+        }
+
+EXAMPLE: What happens when there's an error?
+
+Client sends: GET http://localhost:8080/api/expenses/wrong-id-999
+
+Step 1: Controller calls expenseService.getExpenseById("wrong-id-999")
+Step 2: Service calls repository.findById("wrong-id-999")
+Step 3: SQL runs: SELECT * FROM transactions WHERE id = 'wrong-id-999'
+        MySQL returns no rows.
+Step 4: findById() returns Optional.empty()
+Step 5: .orElseThrow() throws ExpenseNotFoundException("wrong-id-999")
+Step 6: GlobalExceptionHandler catches it in handleNotFound()
+Step 7: Returns HTTP 404 with:
+        {
+          "timestamp": "2024-06-15T10:31:00Z",
+          "status": 404,
+          "error": "Not Found",
+          "messages": ["Transaction not found with id: wrong-id-999"]
+        }
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 8: HOW TO SET UP AND RUN THE PROJECT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Prerequisites (things you need installed first):
+  1. Java 17 or higher  (check: java -version)
+  2. Maven 3.x          (check: mvn -version)
+  3. MySQL 8.x          (check: mysql --version)
+  4. A MySQL client (MySQL Workbench or command line)
+
+Step-by-Step Setup:
+
+  STEP 1: Create the MySQL Database
+  ───────────────────────────────────
+  Open MySQL command line or Workbench and run:
+
+    CREATE DATABASE expense_tracker_db;
+
+  That's it! The table will be auto-created by schema.sql when the app starts.
+
+  STEP 2: Configure Your MySQL Password
+  ────────────────────────────────────────
+  Open: src/main/resources/application.yml
+  Find these lines and update them:
+
+    datasource:
+      username: root
+      password: YOUR_ACTUAL_MYSQL_PASSWORD
+
+  STEP 3: Build the Project
+  ──────────────────────────
+  Open a terminal/command prompt in the project root folder and run:
+
+    mvn clean compile
+
+  Maven will download all dependencies (first time may take 1-2 minutes).
+
+  STEP 4: Run the Application
+  ─────────────────────────────
+  In the same terminal, run:
+
+    mvn spring-boot:run
+
+  You will see logs like:
+    Started ExpenseTrackerApplication in 3.2 seconds
+    Tomcat started on port(s): 8080
+
+  STEP 5: Test with Postman or Browser
+  ──────────────────────────────────────
+  Open your browser and go to:
+    http://localhost:8080/swagger-ui.html
+  → This shows an interactive page where you can test all APIs visually!
+
+  Or use Postman to send requests manually.
+
+  STEP 6: Stop the Application
+  ──────────────────────────────
+  Press Ctrl+C in the terminal.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 9: OOP CONCEPTS USED IN THIS PROJECT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The 4 pillars of Object-Oriented Programming (OOP) are used throughout:
+
+1. ENCAPSULATION
+   "Hide the data, expose only what's needed."
+
+   In Expense.java:
+     - Fields are private (cannot be accessed directly from outside)
+     - Getters and setters control access
+     - Example: You can't do expense.amount = 500 (private!)
+               You must use expense.setAmount(500) (controlled!)
+
+2. INHERITANCE
+   "Child class gets the properties/behavior of parent class."
+
+   In ExpenseNotFoundException.java:
+     - class ExpenseNotFoundException extends RuntimeException
+     - Our class INHERITS getMessage(), printStackTrace(), etc. from RuntimeException
+     - We only add our custom constructor on top
+
+3. ABSTRACTION
+   "Show only what's necessary, hide the complex details."
+
+   ExpenseRepository hides all SQL complexity:
+     - The Service doesn't know about JdbcTemplate or SQL syntax
+     - It just calls repository.save(expense) and the repo handles the rest
+     - This is abstraction: hiding the HOW, exposing only the WHAT
+
+4. POLYMORPHISM
+   "One interface, many implementations."
+
+   The RowMapper<Expense> interface:
+     - We implement it as a lambda: (rs, rowNum) -> { ... }
+     - JdbcTemplate accepts any RowMapper and calls it for each row
+     - The behavior differs based on which RowMapper is passed
+
+EXCEPTION HANDLING (key Java concept):
+
+   try-catch:
+     Try to do something risky. If it fails, catch the error and handle it gracefully.
+     In our app, JdbcTemplate handles this internally.
+     Our GlobalExceptionHandler is the "catch" for the entire application.
+
+   throw vs throws:
+     throw    → actually throws an exception right now
+     throws   → declares that a method MIGHT throw an exception
+     RuntimeExceptions don't need "throws" — they propagate automatically.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 10: SQL CONCEPTS USED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SQL commands used in this project:
+
+  CREATE TABLE  → Creates a new table (only once, using IF NOT EXISTS)
+  INSERT INTO   → Adds a new row to the table
+  SELECT        → Reads rows from the table
+  UPDATE SET    → Modifies existing rows
+  DELETE FROM   → Removes rows from the table
+  WHERE         → Filters which rows to affect/return
+  ORDER BY      → Sorts the results
+  COUNT(*)      → Counts how many rows match
+  SUM(amount)   → Adds up all values in the amount column
+  LIKE          → Searches for a pattern (with % wildcards)
+  BETWEEN       → Filters rows within a range
+  COALESCE      → Returns the first non-null value (fallback)
+  LOWER()       → Converts text to lowercase (for case-insensitive search)
+
+Prepared Statements (using ? placeholders):
+  Purpose: Prevent SQL Injection attacks.
+  Instead of:  "SELECT * WHERE id = '" + id + "'"  ← DANGEROUS
+  We use:      "SELECT * WHERE id = ?"              ← SAFE
+  JDBC fills the ? with the actual value safely, escaping special characters.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 11: KEY SPRING BOOT ANNOTATIONS QUICK REFERENCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌───────────────────────────────────┬────────────────────────────────────────────────┐
+│ Annotation                        │ What it does (Simple)                          │
+├───────────────────────────────────┼────────────────────────────────────────────────┤
+│ @SpringBootApplication            │ Start the app from this class                  │
+│ @RestController                   │ This class handles web/HTTP requests           │
+│ @RequestMapping("/path")          │ All URLs in this class start with /path        │
+│ @GetMapping                       │ Handle HTTP GET request                        │
+│ @PostMapping                      │ Handle HTTP POST request                       │
+│ @PutMapping("/{id}")              │ Handle HTTP PUT request with ID in URL         │
+│ @DeleteMapping("/{id}")           │ Handle HTTP DELETE request with ID in URL      │
+│ @PathVariable                     │ Read a value from the URL path (/{id})         │
+│ @RequestParam                     │ Read a value from the URL query (?key=value)   │
+│ @RequestBody                      │ Read the JSON body of the request              │
+│ @Valid                            │ Trigger validation on the annotated object     │
+│ @Service                          │ Mark as a business logic class                 │
+│ @Repository                       │ Mark as a database access class                │
+│ @RestControllerAdvice             │ Handle exceptions from all controllers         │
+│ @ExceptionHandler(X.class)        │ This method handles exceptions of type X       │
+│ @NotBlank                         │ Field cannot be empty or blank                 │
+│ @NotNull                          │ Field cannot be null                           │
+│ @Positive                         │ Number must be > 0                             │
+│ @Pattern(regexp="...")            │ Must match the regular expression              │
+└───────────────────────────────────┴────────────────────────────────────────────────┘
+
+Dependency Injection (DI):
+  Instead of writing: ExpenseService service = new ExpenseService();
+  Spring does it for you:  private final ExpenseService service;  (Spring injects it!)
+
+  This is called "Inversion of Control" — Spring controls object creation,
+  not your code. Your code just "asks for" the dependency in the constructor.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 12: PROJECT SUMMARY (Resume-Style Points Explained)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+"Developed a Personal Expense Tracker using Spring Boot to record, manage,
+ and organize income and expense transactions."
+
+→ What this means: Built a web API server that lets users track their money
+  (both income received and expenses spent) by storing records in a database.
+
+"Implemented REST APIs to add, view, update, delete, and search transaction
+ records through structured HTTP requests."
+
+→ What this means: Created 12 different API endpoints (URLs) that respond to
+  HTTP methods (POST/GET/PUT/DELETE) to perform all CRUD operations plus
+  searching by keyword and filtering by date range/category/type.
+
+"Integrated JDBC with MySQL to execute SQL queries for storing, retrieving,
+ updating, and managing transaction data."
+
+→ What this means: Instead of using an in-memory variable (which loses data
+  on restart), all data is permanently stored in a MySQL database using
+  Spring's JdbcTemplate to run INSERT, SELECT, UPDATE, DELETE SQL commands.
+
+"Applied Object-Oriented Programming and exception handling to structure the
+ application and handle errors effectively."
+
+→ What this means:
+  - OOP: Used classes, objects, encapsulation (Expense model), inheritance
+    (ExpenseNotFoundException extends RuntimeException), abstraction (repository hides SQL)
+  - Exception Handling: GlobalExceptionHandler catches all errors and returns
+    structured JSON error responses instead of ugly stack traces
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+END OF EXPLANATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If you read this entire file, congratulations! 🎉
+You now understand:
+  ✓ What a REST API is and how HTTP methods work
+  ✓ How Java Spring Boot sets up a web server automatically
+  ✓ What JDBC is and how JdbcTemplate runs SQL queries safely
+  ✓ How MySQL stores data in tables
+  ✓ The 3-layer architecture (Controller → Service → Repository)
+  ✓ What OOP concepts (encapsulation, inheritance, abstraction) mean in real code
+  ✓ How exception handling keeps an API clean and secure
+  ✓ Every file in this project, from top to bottom
+
+This project demonstrates real-world backend development skills used in
+companies like Amazon, Flipkart, and Google for building scalable APIs.

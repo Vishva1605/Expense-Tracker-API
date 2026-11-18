@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Expense Tracker — API Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Tokens ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-base:       #0d0f14;
+      --bg-panel:      #13161e;
+      --bg-card:       #1a1e2a;
+      --bg-card-hover: #1f2435;
+      --bg-input:      #0f1118;
+      --border:        rgba(255,255,255,0.07);
+      --border-focus:  rgba(99,179,255,0.5);
+
+      --accent-blue:   #3b82f6;
+      --accent-green:  #22c55e;
+      --accent-red:    #ef4444;
+      --accent-orange: #f97316;
+      --accent-purple: #a855f7;
+      --accent-teal:   #14b8a6;
+      --accent-yellow: #eab308;
+
+      --text-primary:  #e2e8f0;
+      --text-secondary:#94a3b8;
+      --text-muted:    #475569;
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+
+      --shadow-card: 0 4px 24px rgba(0,0,0,0.4);
+      --shadow-glow: 0 0 40px rgba(59,130,246,0.12);
+
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Scrollbar ───────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3d4f6b; }
+
+    /* ── Layout ──────────────────────────────────────────────────── */
+    .layout { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ─────────────────────────────────────────────────── */
+    .sidebar {
+      width: 260px;
+      min-width: 260px;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .sidebar-brand {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; margin-bottom: 10px;
+      box-shadow: 0 0 16px rgba(59,130,246,0.3);
+    }
+
+    .brand-name {
+      font-size: 15px; font-weight: 700;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .brand-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    .sidebar-section { padding: 16px 12px 8px; }
+
+    .sidebar-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-muted); padding: 0 8px;
+      margin-bottom: 6px;
+    }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; border-radius: var(--radius-sm);
+      cursor: pointer; transition: all 0.18s ease;
+      font-size: 13px; color: var(--text-secondary);
+      text-decoration: none; border: none; background: none;
+      width: 100%; text-align: left;
+    }
+
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
+    .nav-item.active { background: rgba(59,130,246,0.12); color: var(--accent-blue); }
+
+    .nav-method {
+      font-size: 9px; font-weight: 700; font-family: var(--font-mono);
+      padding: 2px 6px; border-radius: 4px; min-width: 38px;
+      text-align: center; letter-spacing: 0.02em;
+    }
+    .method-get    { background: rgba(34,197,94,0.15);  color: var(--accent-green); }
+    .method-post   { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
+    .method-put    { background: rgba(234,179,8,0.15);  color: var(--accent-yellow); }
+    .method-delete { background: rgba(239,68,68,0.15);  color: var(--accent-red); }
+
+    .sidebar-footer {
+      margin-top: auto; padding: 16px; border-top: 1px solid var(--border);
+      font-size: 11px; color: var(--text-muted); text-align: center;
+    }
+
+    /* ── Main Content ─────────────────────────────────────────────── */
+    .main {
+      flex: 1; overflow-y: auto; min-height: 100vh;
+    }
+
+    /* ── Hero ─────────────────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(168,85,247,0.08) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 40px 40px 36px;
+      position: relative; overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute; top: -60px; right: -60px;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2);
+      color: var(--accent-blue); font-size: 11px; font-weight: 600;
+      padding: 4px 12px; border-radius: 99px; margin-bottom: 16px;
+    }
+
+    .hero-tag::before { content: '●'; font-size: 8px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    .hero h1 {
+      font-size: 28px; font-weight: 700; margin-bottom: 8px;
+      background: linear-gradient(90deg, #e2e8f0 0%, #94a3b8 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p { color: var(--text-secondary); font-size: 14px; max-width: 600px; }
+
+    .hero-meta {
+      display: flex; align-items: center; gap: 16px;
+      margin-top: 20px; flex-wrap: wrap;
+    }
+
+    .hero-chip {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      padding: 6px 12px; border-radius: var(--radius-sm);
+      font-size: 12px; color: var(--text-secondary);
+    }
+
+    .hero-chip strong { color: var(--text-primary); }
+
+    /* ── Stats Bar ───────────────────────────────────────────────── */
+    .stats-bar {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px; background: var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stat-cell {
+      background: var(--bg-panel); padding: 18px 24px;
+      text-align: center;
+    }
+
+    .stat-value { font-size: 22px; font-weight: 700; }
+    .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    /* ── Content Area ────────────────────────────────────────────── */
+    .content { padding: 32px 40px; max-width: 960px; }
+
+    /* ── Section Headings ────────────────────────────────────────── */
+    .section-heading {
+      font-size: 13px; font-weight: 600; letter-spacing: 0.05em;
+      text-transform: uppercase; color: var(--text-muted);
+      margin-bottom: 16px; padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ── Endpoint Cards ──────────────────────────────────────────── */
+    .endpoint-group { margin-bottom: 36px; }
+
+    .endpoint-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 12px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .endpoint-card:hover {
+      border-color: rgba(255,255,255,0.12);
+      box-shadow: var(--shadow-card);
+    }
+
+    .endpoint-header {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 20px; cursor: pointer;
+      user-select: none;
+    }
+
+    .endpoint-method {
+      font-size: 11px; font-weight: 700; font-family: var(--font-mono);
+      padding: 4px 10px; border-radius: var(--radius-sm);
+      min-width: 56px; text-align: center;
+    }
+
+    .endpoint-path {
+      font-family: var(--font-mono); font-size: 13px;
+      color: var(--text-primary); flex: 1;
+    }
+
+    .endpoint-desc {
+      font-size: 12px; color: var(--text-secondary);
+    }
+
+    .endpoint-toggle {
+      width: 20px; height: 20px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted); transition: transform 0.25s ease;
+      font-size: 12px;
+    }
+
+    .endpoint-card.open .endpoint-toggle { transform: rotate(180deg); }
+
+    .endpoint-body {
+      border-top: 1px solid var(--border);
+      padding: 20px;
+      display: none;
+    }
+
+    .endpoint-card.open .endpoint-body { display: block; }
+
+    /* ── Forms ───────────────────────────────────────────────────── */
+    .form-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .form-grid.single { grid-template-columns: 1fr; }
+
+    .field { display: flex; flex-direction: column; gap: 5px; }
+
+    .field label {
+      font-size: 11px; font-weight: 600; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+
+    .field label span { color: var(--accent-red); margin-left: 2px; }
+
+    .field input, .field select, .field textarea {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: inherit;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(99,179,255,0.08);
+    }
+
+    .field select option { background: var(--bg-card); }
+
+    .field textarea { resize: vertical; min-height: 70px; }
+
+    .field input::placeholder { color: var(--text-muted); }
+
+    /* ── Buttons ─────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 18px; border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      border: none; transition: all 0.18s ease; font-family: inherit;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-blue), #6366f1);
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(59,130,246,0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(59,130,246,0.45);
+    }
+
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-danger {
+      background: linear-gradient(135deg, var(--accent-red), #dc2626);
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(239,68,68,0.3);
+    }
+
+    .btn-danger:hover { transform: translateY(-1px); }
+
+    .btn-ghost {
+      background: rgba(255,255,255,0.05); color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover { background: rgba(255,255,255,0.09); color: var(--text-primary); }
+
+    /* ── Response Panel ──────────────────────────────────────────── */
+    .response-panel {
+      margin-top: 16px; background: var(--bg-input);
+      border: 1px solid var(--border); border-radius: var(--radius-md);
+      overflow: hidden;
+      display: none;
+    }
+
+    .response-panel.visible { display: block; }
+
+    .response-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
+      font-size: 11px;
+    }
+
+    .response-status {
+      display: flex; align-items: center; gap: 8px; font-weight: 600;
+    }
+
+    .status-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+    }
+    .status-ok { background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+    .status-err { background: var(--accent-red); box-shadow: 0 0 6px var(--accent-red); }
+    .status-loading { background: var(--accent-yellow); animation: pulse 1s infinite; }
+
+    .response-time { color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; }
+
+    .response-copy {
+      background: none; border: none; color: var(--text-muted);
+      cursor: pointer; font-size: 11px; padding: 2px 8px;
+      border-radius: 4px; transition: all 0.15s;
+    }
+
+    .response-copy:hover { background: rgba(255,255,255,0.07); color: var(--text-secondary); }
+
+    .response-body {
+      padding: 14px;
+      font-family: var(--font-mono); font-size: 12px;
+      line-height: 1.7; color: #a8c4e0;
+      max-height: 320px; overflow-y: auto;
+      white-space: pre-wrap; word-break: break-word;
+    }
+
+    /* JSON syntax highlighting */
+    .json-key    { color: #79c0ff; }
+    .json-str    { color: #a8d8a8; }
+    .json-num    { color: #f0a070; }
+    .json-bool   { color: #e88; }
+    .json-null   { color: #888; }
+
+    /* ── Info Boxes ──────────────────────────────────────────────── */
+    .info-box {
+      background: rgba(59,130,246,0.07);
+      border: 1px solid rgba(59,130,246,0.15);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 12px; color: var(--text-secondary);
+      margin-bottom: 14px;
+      line-height: 1.6;
+    }
+
+    .info-box code {
+      font-family: var(--font-mono); font-size: 11px;
+      background: rgba(255,255,255,0.08); padding: 1px 5px;
+      border-radius: 3px; color: var(--text-primary);
+    }
+
+    /* ── Loading Spinner ─────────────────────────────────────────── */
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.15);
+      border-top-color: var(--accent-blue);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    .spinner.active { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ───────────────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 12px 18px;
+      font-size: 13px; color: var(--text-primary);
+      box-shadow: var(--shadow-card);
+      transform: translateY(12px); opacity: 0;
+      transition: all 0.3s ease; pointer-events: none;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    #toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ── Responsive ──────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .stats-bar { grid-template-columns: repeat(2, 1fr); }
+      .form-grid { grid-template-columns: 1fr; }
+      .content { padding: 24px 20px; }
+      .hero { padding: 28px 20px; }
+      .hero h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ─── Sidebar ─────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">💰</div>
+      <div class="brand-name">ExpenseTracker</div>
+      <div class="brand-sub">REST API Dashboard</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Transactions</div>
+      <button class="nav-item" onclick="scrollTo('add')">
+        <span class="nav-method method-post">POST</span> Add Transaction
+      </button>
+      <button class="nav-item" onclick="scrollTo('list')">
+        <span class="nav-method method-get">GET</span> List All
+      </button>
+      <button class="nav-item" onclick="scrollTo('get-one')">
+        <span class="nav-method method-get">GET</span> Get by ID
+      </button>
+      <button class="nav-item" onclick="scrollTo('update')">
+        <span class="nav-method method-put">PUT</span> Update
+      </button>
+      <button class="nav-item" onclick="scrollTo('delete')">
+        <span class="nav-method method-delete">DEL</span> Delete
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Search & Filter</div>
+      <button class="nav-item" onclick="scrollTo('search')">
+        <span class="nav-method method-get">GET</span> Search Title
+      </button>
+      <button class="nav-item" onclick="scrollTo('range')">
+        <span class="nav-method method-get">GET</span> Date Range
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Analytics</div>
+      <button class="nav-item" onclick="scrollTo('total')">
+        <span class="nav-method method-get">GET</span> Total Amount
+      </button>
+      <button class="nav-item" onclick="scrollTo('summary')">
+        <span class="nav-method method-get">GET</span> Summary
+      </button>
+    </div>
+
+    <div class="sidebar-footer">
+      v1.0.0 &nbsp;·&nbsp; Spring Boot 3.2 &nbsp;·&nbsp; MySQL
+    </div>
+  </aside>
+
+  <!-- ─── Main ──────────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-tag">LIVE</div>
+      <h1>Personal Expense Tracker API</h1>
+      <p>Manage your income and expense transactions. Use the panels below to send real HTTP requests to your running Spring Boot server.</p>
+      <div class="hero-meta">
+        <div class="hero-chip">Base URL: <strong>&nbsp;http://localhost:8080/api/expenses</strong></div>
+        <div class="hero-chip">Methods: <strong>&nbsp;GET · POST · PUT · DELETE</strong></div>
+        <div class="hero-chip">DB: <strong>&nbsp;MySQL + JDBC</strong></div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat-cell">
+        <div class="stat-value" style="color:var(--accent-blue)">9</div>
+        <div class="stat-label">Endpoints</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-value" style="color:var(--accent-green)">4</div>
+        <div class="stat-label">HTTP Methods</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-value" style="color:var(--accent-purple)">8080</div>
+        <div class="stat-label">Server Port</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-value" style="color:var(--accent-teal)">JSON</div>
+        <div class="stat-label">Response Format</div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- ── ADD ──────────────────────────────────────────────── -->
+      <div class="endpoint-group" id="add">
+        <div class="section-heading">📥 Add Transaction</div>
+
+        <div class="endpoint-card open">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="endpoint-method method-post">POST</span>
+            <span class="endpoint-path">/api/expenses</span>
+            <span class="endpoint-desc">Create a new income or expense record</span>
+            <span class="endpoint-toggle">▾</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="info-box">
+              Sends a <code>JSON body</code> with all required fields. The server auto-generates the <code>id</code>. Type must be exactly <code>INCOME</code> or <code>EXPENSE</code>.
+            </div>
+            <div class="form-grid">
+              <div class="field">
+                <label>Title <span>*</span></label>
+                <input id="add-title" type="text" placeholder="e.g. Monthly Salary" />
+              </div>
+              <div class="field">
+                <label>Amount <span>*</span></label>
+                <input id="add-amount" type="number" step="0.01" min="0.01" placeholder="e.g. 15000" />
+              </div>
+              <div class="field">
+                <label>Type <span>*</span></label>
+                <select id="add-type">
+                  <option value="">Select type...</option>
+                  <option value="INCOME">INCOME</option>
+                  <option value="EXPENSE">EXPENSE</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Category <span>*</span></label>
+                <input id="add-category" type="text" placeholder="e.g. Salary, Food, Travel" />
+              </div>
+              <div class="field">
+                <label>Date <span>*</span></label>
+                <input id="add-date" type="date" />
+              </div>
+              <div class="field">
+                <label>Notes</label>
+                <input id="add-notes" type="text" placeholder="Optional details..." />
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <button class="btn btn-primary" onclick="addExpense()">
+                <span class="spinner" id="add-spin"></span>
+                ↑ Send Request
+              </button>
+              <button class="btn btn-ghost" onclick="clearForm('add')">Clear</button>
+            </div>
+            <div class="response-panel" id="add-res"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── LIST ALL ──────────────────────────────────────────── -->
+      <div class="endpoint-group" id="list">
+        <div class="section-heading">📋 List Transactions</div>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="endpoint-method method-get">GET</span>
+            <span class="endpoint-path">/api/expenses</span>
+            <span class="endpoint-desc">Get all — optional category & type filter</span>
+            <span class="endpoint-toggle">▾</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="info-box">All filters are <code>optional</code>. Leave blank to get all records. Combine both for narrow results.</div>
+            <div class="form-grid">
+              <div class="field">
+                <label>Category (optional)</label>
+                <input id="list-category" type="text" placeholder="e.g. Food" />
+              </div>
+              <div class="field">
+                <label>Type (optional)</label>
+                <select id="list-type">
+                  <option value="">All types</option>
+                  <option value="INCOME">INCOME</option>
+                  <option value="EXPENSE">EXPENSE</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="listExpenses()">
+              <span class="spinner" id="list-spin"></span>
+              ↓ Fetch
+            </button>
+            <div class="response-panel" id="list-res"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── GET ONE ────────────────────────────────────────────── -->
+      <div class="endpoint-group" id="get-one">
+        <div class="section-heading">🔍 Get One by ID</div>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="endpoint-method method-get">GET</span>
+            <span class="endpoint-path">/api/expenses/{id}</span>
+            <span class="endpoint-desc">Fetch a single transaction by its UUID</span>
+            <span class="endpoint-toggle">▾</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="form-grid single">
+              <div class="field">
+                <label>Transaction ID <span>*</span></label>
+                <input id="get-id" type="text" placeholder="e.g. a1b2c3d4-e5f6-..." />
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="getExpense()">
+              <span class="spinner" id="get-spin"></span>
+              ↓ Fetch
+            </button>
+            <div class="response-panel" id="get-res"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── UPDATE ─────────────────────────────────────────────── -->
+      <div class="endpoint-group" id="update">
+        <div class="section-heading">✏️ Update Transaction</div>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="endpoint-method method-put">PUT</span>
+            <span class="endpoint-path">/api/expenses/{id}</span>
+            <span class="endpoint-desc">Replace all fields of an existing transaction</span>
+            <span class="endpoint-toggle">▾</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="info-box">All fields are required. The <code>id</code> in the URL identifies which record to update.</div>
+            <div class="form-grid single">
+              <div class="field">
+                <label>Transaction ID <span>*</span></label>
+                <input id="upd-id" type="text" placeholder="UUID of the transaction to update" />
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="field">
+                <label>Title <span>*</span></label>
+                <input id="upd-title" type="text" placeholder="Updated title" />
+              </div>
+              <div class="field">
+                <label>Amount <span>*</span></label>
+                <input id="upd-amount" type="number" step="0.01" min="0.01" placeholder="Updated amount" />
+              </div>
+              <div class="field">
+                <label>Type <span>*</span></label>
+                <select id="upd-type">
+                  <option value="">Select type...</option>
+                  <option value="INCOME">INCOME</option>
+                  <option value="EXPENSE">EXPENSE</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Category <span>*</span></label>
+                <input id="upd-category" type="text" placeholder="Updated category" />
+              </div>
+              <div class="field">
+                <label>Date <span>*</span></label>
+                <input id="upd-date" type="date" />
+              </div>
+              <div class="field">
+                <label>Notes</label>
+                <input id="upd-notes" type="text" placeholder="Updated notes..." />
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <button class="btn btn-primary" onclick="updateExpense()">
+                <span class="spinner" id="upd-spin"></span>
+                ↑ Update
+              </button>
+              <button class="btn btn-ghost" onclick="clearForm('upd')">Clear</button>
+            </div>
+            <div class="response-panel" id="upd-res"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DELETE ─────────────────────────────────────────────── -->
+      <div class="endpoint-group" id="delete">
+        <div class="section-heading">🗑️ Delete Transaction</div>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="endpoint-method method-delete">DELETE</span>
+            <span class="endpoint-path">/api/expenses/{id}</span>
+            <span class="endpoint-desc">Permanently remove a transaction</span>
+            <span class="endpoint-toggle">▾</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="info-box" style="background:rgba(239,68,68,0.06);border-color:rgba(239,68,68,0.2);color:#fca5a5">
+              ⚠️ This action is <strong>permanent</strong>. The record will be deleted from MySQL and cannot be recovered.
+            </div>
+            <div class="form-grid single">
+              <div class="field">
+                <label>Transaction ID <span>*</span></label>
+                <input id="del-id" type="text" placeholder="UUID of the transaction to delete" />
+              </div>
+            </div>
+            <button class="btn btn-danger" onclick="deleteExpense()">
+              <span class="spinner" id="del-spin"></span>
+              🗑 Delete
+            </button>
+            <div class="response-panel" id="del-res"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SEARCH ─────────────────────────────────────────────── -->
+      <div class="endpoint-group" id="search">
+        <div class="section-heading">🔎 Search by Title</div>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="endpoint-method method-get">GET</span>
+            <span class="endpoint-path">/api/expenses/search</span>
+            <span class="endpoint-desc">Find transactions by title keyword (case-insensitive)</span>
+            <span class="endpoint-toggle">▾</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="info-box">Uses SQL <code>LIKE %keyword%</code> — partial matches work. E.g. <code>lunch</code> finds "Buy Lunch", "Office Lunch".</div>
+            <div class="form-grid single">
+              <div class="field">
+                <label>Keyword <span>*</span></label>
+                <input id="srch-kw" type="text" placeholder="e.g. lunch, salary, grocery" />
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="searchExpenses()">
+              <span class="spinner" id="srch-spin"></span>
+              🔍 Search
+            </button>
+            <div class="response-panel" id="srch-res"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DATE RANGE ──────────────────────────────────────────── -->
+      <div class="endpoint-group" id="range">
+        <div class="section-heading">📅 Date Range Filter</div>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="endpoint-method method-get">GET</span>
+            <span class="endpoint-path">/api/expenses/range</span>
+            <span class="endpoint-desc">Get transactions between two dates (inclusive)</span>
+            <span class="endpoint-toggle">▾</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="form-grid">
+              <div class="field">
+                <label>Start Date <span>*</span></label>
+                <input id="rng-start" type="date" />
+              </div>
+              <div class="field">
+                <label>End Date <span>*</span></label>
+                <input id="rng-end" type="date" />
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="rangeExpenses()">
+              <span class="spinner" id="rng-spin"></span>
+              ↓ Fetch Range
+            </button>
+            <div class="response-panel" id="rng-res"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TOTAL ───────────────────────────────────────────────── -->
+      <div class="endpoint-group" id="total">
+        <div class="section-heading">💵 Total Amount</div>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="endpoint-method method-get">GET</span>
+            <span class="endpoint-path">/api/expenses/total</span>
+            <span class="endpoint-desc">Sum of all amounts, optionally by category</span>
+            <span class="endpoint-toggle">▾</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="info-box">Leave category empty to get the <code>grand total</code> across all transactions.</div>
+            <div class="form-grid single">
+              <div class="field">
+                <label>Category (optional)</label>
+                <input id="tot-cat" type="text" placeholder="e.g. Food  (blank = all)" />
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="getTotal()">
+              <span class="spinner" id="tot-spin"></span>
+              ∑ Calculate
+            </button>
+            <div class="response-panel" id="tot-res"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SUMMARY ─────────────────────────────────────────────── -->
+      <div class="endpoint-group" id="summary">
+        <div class="section-heading">📊 Financial Summary</div>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="toggle(this)">
+            <span class="endpoint-method method-get">GET</span>
+            <span class="endpoint-path">/api/expenses/summary</span>
+            <span class="endpoint-desc">Dashboard: total income, expenses &amp; net balance</span>
+            <span class="endpoint-toggle">▾</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="info-box">Returns <code>totalIncome</code>, <code>totalExpense</code>, and <code>netBalance</code> (income − expense). No parameters needed.</div>
+            <button class="btn btn-primary" onclick="getSummary()">
+              <span class="spinner" id="sum-spin"></span>
+              📊 Get Summary
+            </button>
+            <div class="response-panel" id="sum-res"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div>
+
+<!-- Toast -->
+<div id="toast">✓ <span id="toast-msg"></span></div>
+
+<script>
+  /* ─── Config ─────────────────────────────────────────────────── */
+  const BASE = '/api/expenses';
+
+  /* ─── UI Helpers ──────────────────────────────────────────────── */
+  function val(id) { return document.getElementById(id)?.value?.trim() ?? ''; }
+
+  function scrollTo(id) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function toggle(header) {
+    const card = header.closest('.endpoint-card');
+    card.classList.toggle('open');
+  }
+
+  function clearForm(prefix) {
+    document.querySelectorAll(`[id^="${prefix}-"]`).forEach(el => {
+      if (el.tagName === 'SELECT') el.value = '';
+      else if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = '';
+    });
+  }
+
+  function showToast(msg, ok = true) {
+    const t = document.getElementById('toast');
+    const m = document.getElementById('toast-msg');
+    t.style.borderColor = ok ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)';
+    t.children[0].textContent = ok ? '✓ ' : '✗ ';
+    m.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  /* ─── Syntax Highlighter ──────────────────────────────────────── */
+  function highlight(json) {
+    return JSON.stringify(json, null, 2)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, m => {
+        let cls = 'json-num';
+        if (/^"/.test(m)) cls = /:$/.test(m) ? 'json-key' : 'json-str';
+        else if (/true|false/.test(m)) cls = 'json-bool';
+        else if (/null/.test(m)) cls = 'json-null';
+        return `<span class="${cls}">${m}</span>`;
+      });
+  }
+
+  /* ─── Response Renderer ───────────────────────────────────────── */
+  function showResponse(panelId, spinnerId, status, data, ms) {
+    const panel = document.getElementById(panelId);
+    const ok = status >= 200 && status < 300;
+    const displayData = data === null ? '(empty — 204 No Content)' : data;
+    const bodyHTML = typeof displayData === 'object'
+      ? highlight(displayData)
+      : `<span>${displayData}</span>`;
+
+    panel.innerHTML = `
+      <div class="response-header">
+        <div class="response-status">
+          <div class="status-dot ${ok ? 'status-ok' : 'status-err'}"></div>
+          <span style="color:${ok ? 'var(--accent-green)' : 'var(--accent-red)'}">${status} ${statusText(status)}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="response-time">${ms}ms</span>
+          <button class="response-copy" onclick="copyResponse('${panelId}')">Copy</button>
+        </div>
+      </div>
+      <pre class="response-body">${bodyHTML}</pre>
+    `;
+    panel.classList.add('visible');
+    document.getElementById(spinnerId).classList.remove('active');
+
+    showToast(ok ? `${status} — Success` : `${status} — ${typeof data === 'object' && data?.error ? data.error : 'Error'}`, ok);
+  }
+
+  function statusText(s) {
+    const m={200:'OK',201:'Created',204:'No Content',400:'Bad Request',404:'Not Found',500:'Server Error'};
+    return m[s] || '';
+  }
+
+  function copyResponse(panelId) {
+    const text = document.querySelector(`#${panelId} .response-body`)?.innerText ?? '';
+    navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard'));
+  }
+
+  function startLoad(spinnerId) {
+    document.getElementById(spinnerId).classList.add('active');
+  }
+
+  /* ─── API Caller ──────────────────────────────────────────────── */
+  async function call(method, url, body, panelId, spinnerId) {
+    startLoad(spinnerId);
+    const t0 = Date.now();
+    try {
+      const opts = {
+        method,
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch(url, opts);
+      const ms = Date.now() - t0;
+      const ct = res.headers.get('content-type') || '';
+      const data = res.status === 204 ? null : ct.includes('json') ? await res.json() : await res.text();
+      showResponse(panelId, spinnerId, res.status, data, ms);
+    } catch (e) {
+      const ms = Date.now() - t0;
+      showResponse(panelId, spinnerId, 0, { error: 'Network Error', message: e.message + ' — Is the server running on port 8080?' }, ms);
+    }
+  }
+
+  /* ─── Endpoint Handlers ───────────────────────────────────────── */
+  function addExpense() {
+    const body = {
+      title: val('add-title'), amount: parseFloat(val('add-amount')) || undefined,
+      type: val('add-type'), category: val('add-category'),
+      date: val('add-date'), notes: val('add-notes') || undefined
+    };
+    call('POST', BASE, body, 'add-res', 'add-spin');
+  }
+
+  function listExpenses() {
+    const params = new URLSearchParams();
+    const cat = val('list-category'); const type = val('list-type');
+    if (cat) params.set('category', cat);
+    if (type) params.set('type', type);
+    const qs = params.toString() ? '?' + params.toString() : '';
+    call('GET', BASE + qs, null, 'list-res', 'list-spin');
+  }
+
+  function getExpense() {
+    const id = val('get-id');
+    if (!id) return showToast('Please enter an ID', false);
+    call('GET', `${BASE}/${encodeURIComponent(id)}`, null, 'get-res', 'get-spin');
+  }
+
+  function updateExpense() {
+    const id = val('upd-id');
+    if (!id) return showToast('Please enter an ID', false);
+    const body = {
+      title: val('upd-title'), amount: parseFloat(val('upd-amount')) || undefined,
+      type: val('upd-type'), category: val('upd-category'),
+      date: val('upd-date'), notes: val('upd-notes') || undefined
+    };
+    call('PUT', `${BASE}/${encodeURIComponent(id)}`, body, 'upd-res', 'upd-spin');
+  }
+
+  function deleteExpense() {
+    const id = val('del-id');
+    if (!id) return showToast('Please enter an ID', false);
+    if (!confirm(`Delete transaction "${id}"? This cannot be undone.`)) return;
+    call('DELETE', `${BASE}/${encodeURIComponent(id)}`, null, 'del-res', 'del-spin');
+  }
+
+  function searchExpenses() {
+    const kw = val('srch-kw');
+    if (!kw) return showToast('Please enter a keyword', false);
+    call('GET', `${BASE}/search?keyword=${encodeURIComponent(kw)}`, null, 'srch-res', 'srch-spin');
+  }
+
+  function rangeExpenses() {
+    const s = val('rng-start'), e = val('rng-end');
+    if (!s || !e) return showToast('Both dates are required', false);
+    call('GET', `${BASE}/range?startDate=${s}&endDate=${e}`, null, 'rng-res', 'rng-spin');
+  }
+
+  function getTotal() {
+    const cat = val('tot-cat');
+    const qs = cat ? `?category=${encodeURIComponent(cat)}` : '';
+    call('GET', `${BASE}/total${qs}`, null, 'tot-res', 'tot-spin');
+  }
+
+  function getSummary() {
+    call('GET', `${BASE}/summary`, null, 'sum-res', 'sum-spin');
+  }
+
+  /* ─── Init: set today's date as default ──────────────────────── */
+  const today = new Date().toISOString().split('T')[0];
+  ['add-date','upd-date','rng-end'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = today;
+  });
+  const monthAgo = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
+  const rngStart = document.getElementById('rng-start');
+  if (rngStart) rngStart.value = monthAgo;
+</script>
+</body>
+</html>
