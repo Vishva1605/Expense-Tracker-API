@@ -1,5 +1,7 @@
 <div align="center">
 
+![Expense Tracker API](src/main/resources/Expense%20Tracker%20API%20Showcase.png)
+
 # 💸 Expense Tracker API
 
 [![Java](https://img.shields.io/badge/Java-17-orange?style=flat-square&logo=java)](https://www.oracle.com/java/)
@@ -67,9 +69,10 @@ Expense-Tracker-API/
     │   ├── dto/  (ExpenseRequest, TotalResponse, SummaryResponse, ApiError)
     │   └── exception/  (ExpenseNotFoundException, GlobalExceptionHandler)
     └── resources/
-        ├── application.yml
+        ├── application-example.yml  ← copy this → application.yml (gitignored)
         ├── schema.sql
-        └── static/index.html
+        └── static/
+            └── index.html
 ```
 
 ---
