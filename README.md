@@ -148,8 +148,9 @@ cd Expense-Tracker-API
 # 2. Create the database
 # In MySQL: CREATE DATABASE expense_tracker_db;
 
-# 3. Set your DB credentials in src/main/resources/application.yml
-#    spring.datasource.password: your_password_here
+# 3. Copy the example config and set your credentials
+cp src/main/resources/application-example.yml src/main/resources/application.yml
+# Then open application.yml and set your MySQL password
 
 # 4. Build & Run
 mvn clean install
