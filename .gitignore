@@ -8,3 +8,6 @@ target/
 
 # Local study notes — not for GitHub
 PROJECT_EXPLANATION.txt
+
+# Database credentials — NEVER push real credentials
+src/main/resources/application.yml
