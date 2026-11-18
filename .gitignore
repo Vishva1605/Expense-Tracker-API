@@ -5,3 +5,6 @@ target/
 *.iml
 .vscode/
 .DS_Store
+
+# Local study notes — not for GitHub
+PROJECT_EXPLANATION.txt
