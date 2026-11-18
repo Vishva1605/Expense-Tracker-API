@@ -1,3 +1,4 @@
+![Expense Tracker API](src/main/resources/Expense%20Tracker%20API%20Showcase.png)
 # Smart Expense Tracker API
 
 A REST API for managing personal expenses, built with **Java 17 + Spring Boot 3**.
